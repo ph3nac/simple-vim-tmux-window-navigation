@@ -4,6 +4,7 @@ function! s:VimNavigate(direction)
 		execute 'wincmd ' . a:direction
 	catch
 		echohl ErrorMsg | echo 'E11: Invalid in command-line window; <CR> execute, CTRL-C quits: wincmd k' | echohl None
+	endtry
 endfunction
 "
 function! s:TmuxSocket()
@@ -29,22 +30,30 @@ command! TmuxNavigatorProcessList call s:TmuxNavigatorProcessList()
 function! s:TmuxAwareNavigate(direction)
 	let nr = winnr() " winnr(): 現在のウィンドウを示す
 	" 
-	let tmux_last_pane = (s:tmux_is_last_pane) " 
+	" let tmux_last_pane = (s:tmux_is_last_pane) " 
 	" 前回のペインがtmuxでない(つまりvimの時)
-	if !tmux_last_pane
+	" if !tmux_last_pane
 		" VimNavigateを呼び出す
-		call s:VimNavigate(a:direction)
-	endif
+	call s:VimNavigate(a:direction)
+	" endif
 	" 上で移動しなかったらtrue(つまりvimが移動できなかったときtrue)
 	let at_tab_page_edge = (nr==winnr())
 
-	if a:tmux_last_pane || a:at_tab_page_edge
+	" if a:tmux_last_pane || a:at_tab_page_edge
+	if  s:at_tab_page_edge
+		let l:tmuxdir
+		if a:direction == 'w'
+			l:tmuxdir = ':.+'
+		elseif a:direction == 'W'
+			l:tmuxdir = ':.-'
+		else
+		endif
 		" trの動作
-		let args = 'select-pane -t ' . shellescape($TMUX_PAIN) . ' -' .tr(a:direction '')
+		let args = 'select-pane -t ' . shellescape($TMUX_PAIN) . ' -' .l:tmuxdir
 		silent call s:TmuxCommand(args)
-		let s:tmux_is_last_pane =1
+		" let s:tmux_is_last_pane =1
 	else
-		let s:tmux_is_last_pane = 0
+		" let s:tmux_is_last_pane = 0
 	endif
 endfunction
 
@@ -53,7 +62,7 @@ endfunction
 " function!  s:main()
 
 " 最後のペインかどうか
-let s:tmux_is_last_pane = 0 
+" let s:tmux_is_last_pane = 0 
 " windowを切り替えるたび実行する自動コマンドを設定
 augroup tmux_navigator
 	au!
@@ -72,7 +81,7 @@ if empty($TMUX)
 	command! TmuxNavigateNext call s:VimNavigate('w')
 endif
 " Tmux使用中のTmuxNavigateの動作を登録
-command! TmuxNavigatePrevious call s:TmuxAwareNavigate('W') " :.=
+command! TmuxNavigatePrevious call s:TmuxAwareNavigate('W') " :.-
 command! TmuxNavigateNext call s:TmuxAwareNavigate('w')     " :.+
 
 " endfunction
