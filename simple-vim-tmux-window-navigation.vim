@@ -34,6 +34,7 @@ function! s:TmuxNavigatorProcessList()
 endfunction
 command! TmuxNavigatorProcessList call s:TmuxNavigatorProcessList()
 
+" not working on terminal vim
 function! s:WindowFocus()
 	if s:tmux_is_last_pane
 		1wincmd w
